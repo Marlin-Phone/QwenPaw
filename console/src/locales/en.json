@@ -1206,6 +1206,7 @@
     "saveSuccess": "Session saved successfully",
     "saveFailed": "Failed to save session",
     "batchDeleteButton": "Batch Delete",
+    "filterTitle": "Filter by Title",
     "filterUserId": "Filter by User ID",
     "filterChannel": "Filter by Channel",
     "allChannels": "All Channels",
