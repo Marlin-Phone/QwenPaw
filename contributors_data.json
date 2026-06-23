@@ -489,13 +489,19 @@
     "login": "lalaliat",
     "avatar_url": "https://github.com/lalaliat.png",
     "html_url": "https://github.com/lalaliat",
-    "contributions": 41
+    "contributions": 42
   },
   {
     "login": "lcq225",
     "avatar_url": "https://github.com/lcq225.png",
     "html_url": "https://github.com/lcq225",
     "contributions": 1
+  },
+  {
+    "login": "lecheng2018",
+    "avatar_url": "https://github.com/lecheng2018.png",
+    "html_url": "https://github.com/lecheng2018",
+    "contributions": 2
   },
   {
     "login": "leesf",
@@ -978,6 +984,12 @@
     "contributions": 1
   },
   {
+    "login": "yaozy2020",
+    "avatar_url": "https://github.com/yaozy2020.png",
+    "html_url": "https://github.com/yaozy2020",
+    "contributions": 11
+  },
+  {
     "login": "ydlstartx",
     "avatar_url": "https://github.com/ydlstartx.png",
     "html_url": "https://github.com/ydlstartx",
@@ -1017,7 +1029,7 @@
     "login": "yuanxs21",
     "avatar_url": "https://github.com/yuanxs21.png",
     "html_url": "https://github.com/yuanxs21",
-    "contributions": 13
+    "contributions": 14
   },
   {
     "login": "yuluo1007",
@@ -1035,7 +1047,7 @@
     "login": "yutai78786",
     "avatar_url": "https://github.com/yutai78786.png",
     "html_url": "https://github.com/yutai78786",
-    "contributions": 14
+    "contributions": 16
   },
   {
     "login": "yyyzl",
@@ -1065,12 +1077,12 @@
     "login": "zhaozhuang521",
     "avatar_url": "https://github.com/zhaozhuang521.png",
     "html_url": "https://github.com/zhaozhuang521",
-    "contributions": 143
+    "contributions": 146
   },
   {
     "login": "zhijianma",
     "avatar_url": "https://github.com/zhijianma.png",
     "html_url": "https://github.com/zhijianma",
-    "contributions": 138
+    "contributions": 141
   }
 ]
