@@ -1634,9 +1634,23 @@ class WeChatChannel(BaseChannel):
         stop_called = False
 
         async def refresh_typing():
-            """Refresh typing indicator every 5 seconds."""
+            """Refresh typing indicator every 5 seconds.
+
+            Auto-stops after MAX_TYPING_SECONDS to prevent the
+            indicator from running forever if the agent hangs.
+            """
             logger.debug("wechat refresh_typing started for %s", user_id)
+            started_at = time.monotonic()
+            MAX_TYPING_SECONDS = 300  # 5 minutes
             while not stop_event.is_set():
+                elapsed = time.monotonic() - started_at
+                if elapsed > MAX_TYPING_SECONDS:
+                    logger.warning(
+                        "wechat refresh_typing: max duration "
+                        "exceeded for %s, auto-stopping",
+                        user_id,
+                    )
+                    break
                 client = self._client
                 if client is None:
                     logger.debug(
@@ -1659,6 +1673,20 @@ class WeChatChannel(BaseChannel):
                     )
                 except asyncio.TimeoutError:
                     pass
+
+            # Auto-send stop typing if we exited due to max duration
+            if not stop_called:
+                client = self._client
+                if client:
+                    try:
+                        await client.sendtyping(
+                            user_id,
+                            ticket,
+                            status=2,
+                        )
+                    except Exception:
+                        pass
+
             logger.debug("wechat refresh_typing stopped for %s", user_id)
 
         # Create the background refresh task.

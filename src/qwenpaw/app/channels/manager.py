@@ -429,8 +429,34 @@ class ChannelManager:
                     except asyncio.QueueEmpty:
                         break
 
-                # Process batch (with merge logic)
-                await _process_batch(ch, batch)
+                # Process batch (with merge logic), with a generous
+                # timeout to prevent a stuck agent from blocking the
+                # consumer forever (e.g. MCP tool hangs).
+                try:
+                    await asyncio.wait_for(
+                        _process_batch(ch, batch),
+                        timeout=300.0,  # 5 minutes
+                    )
+                except asyncio.TimeoutError:
+                    logger.error(
+                        "Process batch timed out after 300s: "
+                        "channel=%s session=%s",
+                        channel_id,
+                        session_id[:30],
+                    )
+                    # Attempt to stop typing indicator for WeChat
+                    if hasattr(ch, "_stop_typing_for_user"):
+                        to_handle = ch.get_to_handle_from_request(
+                            ch._payload_to_request(batch[0]),
+                        )
+                        user_id = (
+                            ch._parse_user_id_from_handle(to_handle)
+                            if hasattr(ch, "_parse_user_id_from_handle")
+                            else ""
+                        )
+                        if user_id:
+                            ch._stop_typing_for_user(user_id)
+                    continue
 
                 # Update processed count
                 if self._queue_manager is not None:
