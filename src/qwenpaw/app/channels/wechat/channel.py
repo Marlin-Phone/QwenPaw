@@ -1674,7 +1674,7 @@ class WeChatChannel(BaseChannel):
                 except asyncio.TimeoutError:
                     pass
 
-            # Auto-send stop typing if we exited due to max duration
+            # Auto-send stop typing if stop() wasn't called (e.g. max duration reached)
             if not stop_called:
                 client = self._client
                 if client:
