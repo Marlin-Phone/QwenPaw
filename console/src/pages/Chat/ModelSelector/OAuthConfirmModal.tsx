@@ -97,7 +97,7 @@ export function OAuthConfirmModal({
           <h3 style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 600 }}>
             {t("modelSelector.oauthTitle", { provider: providerName })}
           </h3>
-          <p style={{ color: "var(--text-secondary)", margin: "0 0 24px" }}>
+          <p style={{ color: "var(--text-secondary, rgba(0,0,0,0.45))", margin: "0 0 24px" }}>
             {t("modelSelector.oauthDescription", { provider: providerName })}
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
@@ -116,7 +116,7 @@ export function OAuthConfirmModal({
           <h3 style={{ margin: "16px 0 8px", fontSize: 16, fontWeight: 600 }}>
             {t("modelSelector.oauthWaiting")}
           </h3>
-          <p style={{ color: "var(--text-secondary)", margin: "0 0 24px" }}>
+          <p style={{ color: "var(--text-secondary, rgba(0,0,0,0.45))", margin: "0 0 24px" }}>
             {t("modelSelector.oauthWaitingDescription")}
           </p>
           <Button onClick={onCancel}>{t("common.cancel")}</Button>
