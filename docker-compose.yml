@@ -24,3 +24,5 @@ services:
       - qwenpaw-data:/app/working
       - qwenpaw-secrets:/app/working.secret
       - qwenpaw-backups:/app/working.backups
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro

@@ -45,6 +45,7 @@ RUN apt-get update && apt-get install -y --fix-missing \
     supervisor  \
     vim  \
     gettext-base \
+    tzdata \
     xfce4 \
     xfce4-terminal \
     xvfb \
