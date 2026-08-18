@@ -91,5 +91,9 @@ async def preview_file(
     return FileResponse(
         path,
         filename=path.name,
-        headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
     )
