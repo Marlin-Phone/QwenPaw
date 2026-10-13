@@ -38,6 +38,14 @@ from ...constant import (
     SYNTHETIC_USER_MESSAGE_TAGS,
 )
 
+# Maximum characters of a single ``tool_result`` output included in served
+# chat history when ``truncate_oversized_outputs=True``. Tool outputs such as
+# files sent via ``send_file_to_user`` or screenshots are persisted as base64
+# inside ``tool_result``; returning them verbatim can inflate one chat-history
+# response to 10+ MB and reliably trip the console's fixed 30 s request
+# timeout on slow links (GH-8228).
+_MAX_TOOL_OUTPUT_CHARS = 64 * 1024
+
 logger = logging.getLogger(__name__)
 
 
@@ -579,12 +587,19 @@ def _original_user_message(msg: Msg, metadata: dict) -> Message | None:
 # pylint: disable=too-many-branches,too-many-statements, too-many-nested-blocks
 def agentscope_msg_to_message(
     messages: Union[Msg, List[Msg]],
+    truncate_oversized_outputs: bool = False,
 ) -> List[Message]:
     """
     Convert AgentScope Msg(s) into one or more runtime Message objects.
 
     Args:
         messages: AgentScope message(s) from streaming.
+        truncate_oversized_outputs: When True, cap oversized
+            ``tool_result`` outputs (files/screenshots persisted as
+            base64) so served chat-history responses stay small enough
+            to transfer within the console's fixed 30 s request timeout
+            on slow links. Defaults to False to keep all other callers
+            byte-for-byte unchanged.
 
     Returns:
         List[Message]: One or more constructed runtime Message objects.
@@ -785,6 +800,17 @@ def agentscope_msg_to_message(
                     )
                 else:
                     output = block.get("output")
+
+                if (
+                    truncate_oversized_outputs
+                    and isinstance(output, str)
+                    and len(output) > _MAX_TOOL_OUTPUT_CHARS
+                ):
+                    output = (
+                        output[:_MAX_TOOL_OUTPUT_CHARS]
+                        + f"\n… [output truncated to {_MAX_TOOL_OUTPUT_CHARS}"
+                        f" chars; original length {len(output)} chars]"
+                    )
 
                 output_data = FunctionCallOutput(
                     call_id=block.get("id"),

@@ -37,6 +37,7 @@ from agentscope.message import Msg
 
 from qwenpaw.app.chats import utils as chats_utils
 from qwenpaw.app.chats.utils import (
+    _MAX_TOOL_OUTPUT_CHARS,
     _abspath_from_url,
     _is_local_file_url,
     _resolve_content_url,
@@ -48,7 +49,7 @@ from qwenpaw.exceptions import AgentRuntimeErrorException
 from qwenpaw.schemas import ContentType, MessageType
 
 
-def _convert(msg, tz: str | None = "UTC"):
+def _convert(msg, tz: str | None = "UTC", truncate: bool = False):
     """Convert with a stubbed config so the user timezone is fixed.
 
     ``tz`` is widened to ``None`` because one test deliberately stubs a
@@ -60,7 +61,10 @@ def _convert(msg, tz: str | None = "UTC"):
         "load_config",
         return_value=SimpleNamespace(user_timezone=tz),
     ):
-        return agentscope_msg_to_message(msg)
+        return agentscope_msg_to_message(
+            msg,
+            truncate_oversized_outputs=truncate,
+        )
 
 
 def _msg(content, role: str = "assistant", **kw) -> Msg:
@@ -795,3 +799,46 @@ def test_env_context_invalid_timezone_falls_back_to_utc() -> None:
     assert "- Current date: " in out
     assert " UTC (" in out
     assert "Mars/Olympus" not in out
+
+
+# ---------------------------------------------------------------------------
+# tool_result oversized-output truncation (GH-8228)
+# ---------------------------------------------------------------------------
+
+
+def _tool_result_msg(output_length: int) -> Msg:
+    return _msg(
+        [
+            {
+                "type": "tool_result",
+                "id": "c",
+                "name": "f",
+                "output": "x" * output_length,
+            },
+        ],
+    )
+
+
+def test_tool_result_oversized_output_truncated_when_requested() -> None:
+    original_length = _MAX_TOOL_OUTPUT_CHARS + 1024
+    out = _convert(_tool_result_msg(original_length), truncate=True)
+    data = _contents(out[0])[0]["data"]
+    assert data["call_id"] == "c"
+    assert data["output"].startswith("x" * _MAX_TOOL_OUTPUT_CHARS)
+    assert "output truncated" in data["output"]
+    assert str(original_length) in data["output"]
+    # truncated payload keeps a bounded size regardless of the original blob
+    assert len(data["output"]) < _MAX_TOOL_OUTPUT_CHARS + 200
+
+
+def test_tool_result_oversized_output_kept_by_default() -> None:
+    original_length = _MAX_TOOL_OUTPUT_CHARS + 1024
+    out = _convert(_tool_result_msg(original_length))
+    data = _contents(out[0])[0]["data"]
+    assert data["output"] == "x" * original_length
+
+
+def test_tool_result_small_output_kept_when_truncation_requested() -> None:
+    out = _convert(_tool_result_msg(100), truncate=True)
+    data = _contents(out[0])[0]["data"]
+    assert data["output"] == "x" * 100
