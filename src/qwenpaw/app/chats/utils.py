@@ -82,19 +82,15 @@ def _cap_tool_output(
                     name = block.get("name") or "media"
                     block = {
                         "type": "text",
-                        "text": (
-                            f"[{name}: base64 omitted from history, {n} chars]"
-                        ),
+                        "text": f"[{name}: base64 omitted from history,"
+                        f" {n} chars]",
                     }
             capped.append(block)
         return capped
     if isinstance(output, str) and len(output) > max_chars:
-        return (
-            output[:max_chars]
-            + f" [output truncated to {max_chars} chars;"
-            f" original length {len(output)} chars]"
-        )
+        return output[:max_chars] + f" [output truncated: {len(output)} chars]"
     return output
+
 
 logger = logging.getLogger(__name__)
 
