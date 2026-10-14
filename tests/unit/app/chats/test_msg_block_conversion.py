@@ -844,7 +844,7 @@ def test_tool_result_small_output_kept_when_truncation_requested() -> None:
     assert data["output"] == "x" * 100
 
 
-def test_tool_result_list_base64_output_stays_valid_json_when_truncated() -> None:
+def test_tool_result_list_base64_valid_json_when_truncated() -> None:
     """Screenshots / view_image persist output as a list; the oversized
     base64 DataBlock must be replaced structurally so the served JSON stays
     valid and the TextBlock sibling survives."""
@@ -898,7 +898,7 @@ def test_tool_result_url_source_kept_byte_identical_when_truncated() -> None:
                         "source": {
                             "type": "url",
                             "url": "file:///tmp/x.pptx",
-                            "media_type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                            "media_type": "application/octet-stream",
                         },
                     },
                 ],

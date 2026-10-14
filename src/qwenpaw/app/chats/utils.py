@@ -83,8 +83,7 @@ def _cap_tool_output(
                     block = {
                         "type": "text",
                         "text": (
-                            f"[{name}: base64 omitted from history,"
-                            f" {n} chars]"
+                            f"[{name}: base64 omitted from history, {n} chars]"
                         ),
                     }
             capped.append(block)
@@ -851,10 +850,7 @@ def agentscope_msg_to_message(
                         _MAX_TOOL_OUTPUT_CHARS,
                     )
                 if isinstance(output, (dict, list)):
-                    output = json.dumps(
-                        output,
-                        ensure_ascii=False,
-                    )
+                    output = json.dumps(output, ensure_ascii=False)
 
                 output_data = FunctionCallOutput(
                     call_id=block.get("id"),
