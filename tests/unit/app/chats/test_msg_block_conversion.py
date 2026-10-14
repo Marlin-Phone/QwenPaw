@@ -895,7 +895,11 @@ def test_tool_result_url_source_kept_byte_identical_when_truncated() -> None:
                     {"type": "text", "text": "file sent"},
                     {
                         "type": "data",
-                        "source": {"type": "url", "url": "file:///tmp/x.pptx"},
+                        "source": {
+                            "type": "url",
+                            "url": "file:///tmp/x.pptx",
+                            "media_type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                        },
                     },
                 ],
             },
