@@ -46,6 +46,57 @@ from ...constant import (
 # timeout on slow links (GH-8228).
 _MAX_TOOL_OUTPUT_CHARS = 64 * 1024
 
+# Inline base64 blobs above this size are replaced structurally before
+# serialisation. 4 KB matches the console's ``LARGE_BASE64_CHARS``: the UI
+# never renders base64 from the output blob (it reads ``source.url`` and
+# replaces large inline blobs), so dropping the payload is safe and makes
+# the served response both smaller and still valid JSON.
+_BASE64_KEEP_CHARS = 4 * 1024
+
+
+def _cap_tool_output(
+    output: Union[str, list, dict],
+    max_chars: int,
+) -> Union[str, list, dict]:
+    """Bound a served ``tool_result`` output without breaking JSON.
+
+    ``ToolResultBlock.output`` is ``str | list[TextBlock | DataBlock]``;
+    screenshots and ``view_image`` results persist as a list with the
+    base64 inside ``DataBlock.source.data``. Slicing the serialised JSON
+    string would cut inside a string literal and yield invalid JSON, so
+    oversized base64 blocks are replaced structurally *before* JSON
+    serialisation, and only plain ``str`` outputs are sliced.
+    """
+    if isinstance(output, list):
+        capped = []
+        for block in output:
+            block = dict(block) if isinstance(block, dict) else block
+            if isinstance(block, dict):
+                src = block.get("source")
+                if (
+                    isinstance(src, dict)
+                    and src.get("type") == "base64"
+                    and len(src.get("data", "")) > _BASE64_KEEP_CHARS
+                ):
+                    n = len(src["data"])
+                    name = block.get("name") or "media"
+                    block = {
+                        "type": "text",
+                        "text": (
+                            f"[{name}: base64 omitted from history,"
+                            f" {n} chars]"
+                        ),
+                    }
+            capped.append(block)
+        return capped
+    if isinstance(output, str) and len(output) > max_chars:
+        return (
+            output[:max_chars]
+            + f" [output truncated to {max_chars} chars;"
+            f" original length {len(output)} chars]"
+        )
+    return output
+
 logger = logging.getLogger(__name__)
 
 
@@ -793,23 +844,16 @@ def agentscope_msg_to_message(
                 current_message.metadata = metadata
                 current_type = MessageType.PLUGIN_CALL_OUTPUT
 
-                if isinstance(block.get("output"), (dict, list)):
-                    output = json.dumps(
-                        block.get("output"),
-                        ensure_ascii=False,
+                output = block.get("output")
+                if truncate_oversized_outputs:
+                    output = _cap_tool_output(
+                        output,
+                        _MAX_TOOL_OUTPUT_CHARS,
                     )
-                else:
-                    output = block.get("output")
-
-                if (
-                    truncate_oversized_outputs
-                    and isinstance(output, str)
-                    and len(output) > _MAX_TOOL_OUTPUT_CHARS
-                ):
-                    output = (
-                        output[:_MAX_TOOL_OUTPUT_CHARS]
-                        + f"\n… [output truncated to {_MAX_TOOL_OUTPUT_CHARS}"
-                        f" chars; original length {len(output)} chars]"
+                if isinstance(output, (dict, list)):
+                    output = json.dumps(
+                        output,
+                        ensure_ascii=False,
                     )
 
                 output_data = FunctionCallOutput(

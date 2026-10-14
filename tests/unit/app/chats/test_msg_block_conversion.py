@@ -842,3 +842,67 @@ def test_tool_result_small_output_kept_when_truncation_requested() -> None:
     out = _convert(_tool_result_msg(100), truncate=True)
     data = _contents(out[0])[0]["data"]
     assert data["output"] == "x" * 100
+
+
+def test_tool_result_list_base64_output_stays_valid_json_when_truncated() -> None:
+    """Screenshots / view_image persist output as a list; the oversized
+    base64 DataBlock must be replaced structurally so the served JSON stays
+    valid and the TextBlock sibling survives."""
+    b64 = "A" * 120000
+    msg = _msg(
+        [
+            {
+                "type": "tool_result",
+                "id": "c",
+                "name": "view_image",
+                "output": [
+                    {"type": "text", "text": "ok"},
+                    {
+                        "type": "data",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "image/png",
+                            "data": b64,
+                        },
+                    },
+                ],
+            },
+        ],
+    )
+    out = _convert(msg, truncate=True)
+    data = _contents(out[0])[0]["data"]
+    parsed = json.loads(data["output"])  # must remain parseable
+    texts = [
+        b.get("text")
+        for b in parsed
+        if isinstance(b, dict) and b.get("type") == "text"
+    ]
+    assert "ok" in texts
+    assert any("base64 omitted from history" in t for t in texts)
+    assert len(data["output"]) < 1024  # far below the original 120 KB blob
+
+
+def test_tool_result_url_source_kept_byte_identical_when_truncated() -> None:
+    """URL sources (e.g. send_file_to_user attachments) are small and
+    must be passed through byte-for-byte."""
+    msg = _msg(
+        [
+            {
+                "type": "tool_result",
+                "id": "c",
+                "name": "send_file_to_user",
+                "output": [
+                    {"type": "text", "text": "file sent"},
+                    {
+                        "type": "data",
+                        "source": {"type": "url", "url": "file:///tmp/x.pptx"},
+                    },
+                ],
+            },
+        ],
+    )
+    default_out = _contents(_convert(msg))[0]["data"]["output"]
+    capped_out = _contents(_convert(msg, truncate=True))[0]["data"]["output"]
+    assert capped_out == default_out
+    parsed = json.loads(capped_out)
+    assert parsed[1]["source"]["url"] == "file:///tmp/x.pptx"
