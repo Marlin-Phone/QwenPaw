@@ -878,7 +878,10 @@ def test_tool_result_list_base64_valid_json_when_truncated() -> None:
         if isinstance(b, dict) and b.get("type") == "text"
     ]
     assert "ok" in texts
-    assert any("base64 omitted from history" in t for t in texts)
+    assert any(
+        isinstance(t, str) and "base64 omitted from history" in t
+        for t in texts
+    )
     assert len(data["output"]) < 1024  # far below the original 120 KB blob
 
 

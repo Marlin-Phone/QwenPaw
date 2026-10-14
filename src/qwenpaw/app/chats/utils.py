@@ -55,9 +55,9 @@ _BASE64_KEEP_CHARS = 4 * 1024
 
 
 def _cap_tool_output(
-    output: Union[str, list, dict],
+    output: Optional[Union[str, list, dict]],
     max_chars: int,
-) -> Union[str, list, dict]:
+) -> Optional[Union[str, list, dict]]:
     """Bound a served ``tool_result`` output without breaking JSON.
 
     ``ToolResultBlock.output`` is ``str | list[TextBlock | DataBlock]``;
@@ -65,7 +65,8 @@ def _cap_tool_output(
     base64 inside ``DataBlock.source.data``. Slicing the serialised JSON
     string would cut inside a string literal and yield invalid JSON, so
     oversized base64 blocks are replaced structurally *before* JSON
-    serialisation, and only plain ``str`` outputs are sliced.
+    serialisation, and only plain ``str`` outputs are sliced. ``None``
+    (no output) is returned unchanged.
     """
     if isinstance(output, list):
         capped = []
