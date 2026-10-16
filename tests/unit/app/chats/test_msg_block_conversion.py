@@ -908,8 +908,9 @@ def test_tool_result_url_source_kept_byte_identical_when_truncated() -> None:
             },
         ],
     )
-    default_out = _contents(_convert(msg))[0]["data"]["output"]
-    capped_out = _contents(_convert(msg, truncate=True))[0]["data"]["output"]
+    default_out = _contents(_convert(msg)[0])[0]["data"]["output"]
+    out = _convert(msg, truncate=True)
+    capped_out = _contents(out[0])[0]["data"]["output"]
     assert capped_out == default_out
     parsed = json.loads(capped_out)
     assert parsed[1]["source"]["url"] == "file:///tmp/x.pptx"
